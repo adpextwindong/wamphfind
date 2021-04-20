@@ -46,7 +46,7 @@ data TrackInfo = TrackInfo {
 instance ToJSON TrackInfo where
     toEncoding = genericToEncoding defaultOptions
 
-data PathStyle = RelativePath | AbsolutePath
+data PathStyle = RelativePath | AbsolutePath FilePath
     deriving Show
 
 data SearchStyle = LocalOnly | RecursiveSearch
@@ -55,6 +55,7 @@ data SearchStyle = LocalOnly | RecursiveSearch
 data AppConfig = AppConfig {
                         useRecursiveSearch  :: SearchStyle
                       , useRelativePaths    :: PathStyle
+                      , useFilePathAsTitle  :: Bool
                       , outPath             :: Maybe FilePath
                       , inPaths             :: [FilePath]
                      } deriving Show
@@ -62,7 +63,8 @@ data AppConfig = AppConfig {
 appConfigParse :: Parser AppConfig
 appConfigParse = AppConfig
     <$> argpRecursiveSearch
-    <*> argpRelativePaths
+    <*> (argpAbsolutePath <|> argpRelativePath)
+    <*> argpFPAsTitle
     <*> (optional $ argpOutPath)
     <*> argpInPaths
 
@@ -72,11 +74,18 @@ argpRecursiveSearch = flag LocalOnly -- defaults to nonRecursiveSearch
                            (short 'r' <> long "recursive" <>
                             help "TODO Search for mp3 files recursively. Defaults to input directory only search.")
 
-argpRelativePaths :: Parser PathStyle
-argpRelativePaths = flag RelativePath -- defaults to
-                         AbsolutePath
+argpAbsolutePath :: Parser PathStyle
+argpAbsolutePath = AbsolutePath <$> option str
                          (short 'a' <> long "absolute" <>
                           help "TODO Use absolute file path style. Defaults to relative file paths.")
+
+argpRelativePath = flag RelativePath RelativePath (internal)
+
+argpFPAsTitle :: Parser Bool
+argpFPAsTitle = flag False
+                     True
+                     (short 'n' <> long "FileNameAsTitle" <>
+                      help "Use FileName as Title field metadata.")
 
 argpOutPath :: Parser FilePath
 argpOutPath = strOption ( short 'o' <> long "output" <> metavar "OUTPUT"
@@ -109,17 +118,19 @@ filterByExtensions :: Set String -> [FilePath] -> [FilePath]
 filterByExtensions extensions = filter (\file -> Set.member (getExt file) extensions)
     where getExt = snd . splitExtension
 
-readTrackInfo :: FilePath -> IO TrackInfo
-readTrackInfo fp = do
+readTrackInfo :: Bool -> FilePath -> IO TrackInfo
+readTrackInfo pUseFname fp = do
     tag <- ID3.readTag fp
     let metadata = (fmap fromID3Tag) $ tag
+    --TODO fname as title
+    --TODO Path styling
     return $ TrackInfo fp metadata
 
 main' :: AppConfig -> IO ()
 --CWD STDOUT case
-main' (AppConfig LocalOnly pathStyle outputPath []) = do
+main' (AppConfig LocalOnly pathStyle pUseFname outputPath []) = do
     filePaths <- liftM (filterByExtensions allowableExtensions) $ listDirectory =<< getCurrentDirectory
-    results <- mapM readTrackInfo filePaths
+    results <- mapM (readTrackInfo pUseFname) filePaths
     case outputPath of
         Nothing -> B.putStr . encode $ results
         (Just fp) -> encodeFile fp results
