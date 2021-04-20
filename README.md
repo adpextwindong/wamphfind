@@ -25,3 +25,6 @@ See --help for more details
 - Absolute file path handling with basenames
 - Input filepath args
 - Web Audio API extension list
+- forkMapM parallelism
+- Prompt on existing outputfile
+- Exception Handling
