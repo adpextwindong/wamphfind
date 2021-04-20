@@ -1,6 +1,8 @@
 # wamphfind
 
-Web Amp Haskell Find Utility by George Takumi Crary
+[Web Amp](https://github.com/captbaritone/webamp) Haskell Find Utility by George Takumi Crary
+
+Generates the tracklist JSON seen [here](https://github.com/captbaritone/webamp/blob/master/examples/minimal/index.html#L16).
 
 # Usage
 
@@ -15,3 +17,11 @@ See --help for more details
 ```
 ./wamphfind
 ```
+
+# TODO
+
+- Duration calculation
+- Recursive directory searching
+- Absolute file path handling with basenames
+- Input filepath args
+- Web Audio API extension list
