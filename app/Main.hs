@@ -6,24 +6,41 @@ import Lib
 
 import GHC.Generics
 import Data.Aeson
+import qualified ID3.Simple as ID3
 
 import Options.Applicative
 import System.Exit (exitSuccess)
 import System.FilePath
 import System.Directory
+import Control.Monad
+import Data.Set (Set)
+import qualified Data.Set as Set
+import qualified Data.ByteString.Lazy as B
 
 data TrackMetaData = TrackMetaData {
-                        artist :: String
-                      , title  :: String
+                        artist  :: Maybe String
+                      , title   :: Maybe String
+                      , album   :: Maybe String
+                      , year    :: Maybe String
+                      , track   :: Maybe String
                      } deriving (Generic, Show)
 
 instance ToJSON TrackMetaData where
     toEncoding = genericToEncoding defaultOptions
 
+fromID3Tag :: ID3.Tag -> TrackMetaData
+fromID3Tag meta = TrackMetaData art titleField album year track
+    where
+        art = ID3.getArtist meta
+        titleField = ID3.getTitle meta
+        album = ID3.getAlbum meta
+        year = ID3.getYear meta
+        track = ID3.getTrack meta
+
 data TrackInfo = TrackInfo {
-                    trackURL :: FilePath
-                --, duration :: Float
-                  , trackMeta :: TrackMetaData
+                    url :: FilePath
+                --, duration :: Float TODO figure out how idiii or ID3v2 in general handles this
+                  , metaData :: Maybe TrackMetaData
                  } deriving (Generic, Show)
 
 instance ToJSON TrackInfo where
@@ -53,13 +70,13 @@ argpRecursiveSearch :: Parser SearchStyle
 argpRecursiveSearch = flag LocalOnly -- defaults to nonRecursiveSearch
                            RecursiveSearch
                            (short 'r' <> long "recursive" <>
-                            help "Search for mp3 files recursively. Defaults to input directory only search.")
+                            help "TODO Search for mp3 files recursively. Defaults to input directory only search.")
 
 argpRelativePaths :: Parser PathStyle
 argpRelativePaths = flag RelativePath -- defaults to
                          AbsolutePath
                          (short 'a' <> long "absolute" <>
-                          help "Use absolute file path style. Defaults to relative file paths.")
+                          help "TODO Use absolute file path style. Defaults to relative file paths.")
 
 argpOutPath :: Parser FilePath
 argpOutPath = strOption ( short 'o' <> long "output" <> metavar "OUTPUT"
@@ -67,7 +84,7 @@ argpOutPath = strOption ( short 'o' <> long "output" <> metavar "OUTPUT"
 
 argpInPaths :: Parser [FilePath]
 argpInPaths = many $ argument str (metavar "INPUTDIRS..." <>
-                                    help "Input directory paths. Defaults to current working directory")
+                                    help "TODO Input directory paths. Defaults to current working directory")
 
 optsParse :: ParserInfo AppConfig
 optsParse =
@@ -80,5 +97,30 @@ optsParse =
 
 main :: IO ()
 main = do
-    print =<< execParser optsParse
+    appConfig <- execParser optsParse
+    main' appConfig
     exitSuccess
+
+--TODO Check Web Audio API limitations
+allowableExtensions :: Set String
+allowableExtensions = Set.fromList [".mp3"]
+
+filterByExtensions :: Set String -> [FilePath] -> [FilePath]
+filterByExtensions extensions = filter (\file -> Set.member (getExt file) extensions)
+    where getExt = snd . splitExtension
+
+readTrackInfo :: FilePath -> IO TrackInfo
+readTrackInfo fp = do
+    tag <- ID3.readTag fp
+    let metadata = (fmap fromID3Tag) $ tag
+    return $ TrackInfo fp metadata
+
+main' :: AppConfig -> IO ()
+--CWD STDOUT case
+main' (AppConfig LocalOnly pathStyle outputPath []) = do
+    filePaths <- liftM (filterByExtensions allowableExtensions) $ listDirectory =<< getCurrentDirectory
+    results <- mapM readTrackInfo filePaths
+    case outputPath of
+        Nothing -> B.putStr . encode $ results
+        (Just fp) -> encodeFile fp results
+    return ()

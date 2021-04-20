@@ -40,7 +40,13 @@ packages:
 # - git: https://github.com/commercialhaskell/stack.git
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a
 #
-# extra-deps: []
+extra-deps:
+ - ../idiii
+ - regex-posix-clib-2.7@sha256:998fca06da3d719818f0691ef0b8b9b7375afeea228cb08bd9e2db53f96b0cd7,1232
+
+flags:
+   regex-posix:
+      _regex-posix-clib: true
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
