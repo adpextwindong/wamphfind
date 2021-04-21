@@ -28,3 +28,4 @@ See --help for more details
 - forkMapM parallelism
 - Prompt on existing outputfile
 - Exception Handling
+- Symbolic Link Handling?
