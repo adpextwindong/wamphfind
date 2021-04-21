@@ -54,7 +54,7 @@ argpFPAsTitle = flag False
                       help "Use FileName as Title field metadata.")
 
 argpOutPath :: Parser FilePath
-argpOutPath = strOption ( short 'o' <> long "output" <> metavar "OUTPUT"
+argpOutPath = strOption ( short 'o' <> long "output" <> metavar "OUTPUT_TARGET"
                             <> help "Output filepath for JSON Array tracklist. Defaults to STDOUT" )
 
 argpInPaths :: Parser [FilePath]
@@ -85,15 +85,17 @@ filterByExtensions extensions = filter (\file -> Set.member (getExt file) extens
     where getExt = snd . splitExtension
 
 findMusicFromDirectory :: SearchStyle -> FilePath -> IO [FilePath]
-findMusicFromDirectory LocalOnly = liftM (filterByExtensions allowableExtensions) . listDirectory
+findMusicFromDirectory LocalOnly       = fmap (filterByExtensions allowableExtensions) . listDirectory
 findMusicFromDirectory RecursiveSearch = undefined --TODO
+
+--Nothing redirects to STDOUT
+outputEncodeToTarget :: ToJSON a => a -> Maybe FilePath -> IO ()
+outputEncodeToTarget results Nothing   = B.putStr . encode $ results
+outputEncodeToTarget results (Just fp) = encodeFile fp results
 
 main' :: AppConfig -> IO ()
 --CWD STDOUT case
 main' (AppConfig LocalOnly pathStyle pUseFname outputPath []) = do
-    filePaths <- (findMusicFromDirectory LocalOnly) =<< getCurrentDirectory
+    filePaths <- findMusicFromDirectory LocalOnly =<< getCurrentDirectory
     results <- mapM (readTrackInfo pUseFname) filePaths
-    case outputPath of
-        Nothing -> B.putStr . encode $ results
-        (Just fp) -> encodeFile fp results
-    return ()
+    outputEncodeToTarget results outputPath
