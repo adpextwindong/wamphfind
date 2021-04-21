@@ -1,25 +1,27 @@
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveGeneric, TemplateHaskell #-}
 
-module Wamphf (
-    TrackMetaData,
-    TrackInfo,
-    readTrackInfo
-  ) where
+module Wamphf where
+
+import Control.Lens.TH
+import Control.Lens
 
 import GHC.Generics
 import Data.Aeson
+import Data.Aeson.TH
+import Data.Aeson.Types
 import qualified ID3.Simple as ID3
 
 data TrackMetaData = TrackMetaData {
-                        artist  :: Maybe String
-                      , title   :: Maybe String
-                      , album   :: Maybe String
-                      , year    :: Maybe String
-                      , track   :: Maybe String
+                        _artist  :: Maybe String
+                      , _title   :: Maybe String
+                      , _album   :: Maybe String
+                      , _year    :: Maybe String
+                      , _track   :: Maybe String
                      } deriving (Generic, Show)
 
-instance ToJSON TrackMetaData where
-    toEncoding = genericToEncoding defaultOptions
+makeLenses ''TrackMetaData
+
+deriveJSON defaultOptions{fieldLabelModifier = drop 1} ''TrackMetaData
 
 fromID3Tag :: ID3.Tag -> TrackMetaData
 fromID3Tag meta = TrackMetaData art titleField album year track
@@ -31,13 +33,14 @@ fromID3Tag meta = TrackMetaData art titleField album year track
         track = ID3.getTrack meta
 
 data TrackInfo = TrackInfo {
-                    url :: FilePath
+                    _url :: FilePath
                 --, duration :: Float TODO figure out how idiii or ID3v2 in general handles this
-                  , metaData :: Maybe TrackMetaData
+                  , _metaData :: Maybe TrackMetaData
                  } deriving (Generic, Show)
 
-instance ToJSON TrackInfo where
-    toEncoding = genericToEncoding defaultOptions
+makeLenses ''TrackInfo
+
+deriveJSON defaultOptions{fieldLabelModifier = drop 1} ''TrackInfo
 
 readTrackInfo :: Bool -> FilePath -> IO TrackInfo
 readTrackInfo pUseFname fp = do

@@ -8,6 +8,7 @@ import System.Exit (exitSuccess)
 import System.FilePath
 import System.Directory
 import Control.Monad
+import Control.Lens
 import Data.Set (Set)
 import qualified Data.Set as Set
 import qualified Data.ByteString.Lazy as B
@@ -58,7 +59,7 @@ argpOutPath = strOption ( short 'o' <> long "output" <> metavar "OUTPUT_TARGET"
                             <> help "Output filepath for JSON Array tracklist. Defaults to STDOUT" )
 
 argpInPaths :: Parser [FilePath]
-argpInPaths = many $ argument str (metavar "INPUTDIRS..." <>
+argpInPaths = many $ Options.Applicative.argument str (metavar "INPUTDIRS..." <>
                                     help "TODO Input directory paths. Defaults to current working directory")
 
 optsParse :: ParserInfo AppConfig
@@ -93,9 +94,16 @@ outputEncodeToTarget :: ToJSON a => a -> Maybe FilePath -> IO ()
 outputEncodeToTarget results Nothing   = B.putStr . encode $ results
 outputEncodeToTarget results (Just fp) = encodeFile fp results
 
+swapTitleWithFname :: FilePath -> TrackInfo -> TrackInfo
+swapTitleWithFname fp tinfo = over (metaData . _Just . title . _Just) (const fname) tinfo
+    where fname = takeFileName fp
+
+
+ts = TrackInfo "fn" $ Just $ TrackMetaData Nothing (Just "test") Nothing Nothing Nothing
 main' :: AppConfig -> IO ()
 --CWD STDOUT case
 main' (AppConfig LocalOnly pathStyle pUseFname outputPath []) = do
     filePaths <- findMusicFromDirectory LocalOnly =<< getCurrentDirectory
-    results <- mapM (readTrackInfo pUseFname) filePaths
-    outputEncodeToTarget results outputPath
+    tracks <- mapM (readTrackInfo pUseFname) filePaths
+    --TODO we could probably use a lens to cleanly do the Fname mapping
+    outputEncodeToTarget tracks outputPath
