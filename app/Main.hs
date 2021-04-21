@@ -31,7 +31,7 @@ appConfigParse = AppConfig
     <$> argpRecursiveSearch
     <*> (argpAbsolutePath <|> argpRelativePath)
     <*> argpFPAsTitle
-    <*> (optional $ argpOutPath)
+    <*> optional argpOutPath
     <*> argpInPaths
 
 argpRecursiveSearch :: Parser SearchStyle
@@ -45,7 +45,7 @@ argpAbsolutePath = AbsolutePath <$> option str
                          (short 'a' <> long "absolute" <>
                           help "TODO Use absolute file path style. Defaults to relative file paths.")
 
-argpRelativePath = flag RelativePath RelativePath (internal)
+argpRelativePath = flag RelativePath RelativePath internal
 
 argpFPAsTitle :: Parser Bool
 argpFPAsTitle = flag False
@@ -87,7 +87,7 @@ filterByExtensions extensions = filter (\file -> Set.member (getExt file) extens
 main' :: AppConfig -> IO ()
 --CWD STDOUT case
 main' (AppConfig LocalOnly pathStyle pUseFname outputPath []) = do
-    filePaths <- liftM (filterByExtensions allowableExtensions) $ listDirectory =<< getCurrentDirectory
+    filePaths <- fmap (filterByExtensions allowableExtensions) $ listDirectory =<< getCurrentDirectory
     results <- mapM (readTrackInfo pUseFname) filePaths
     case outputPath of
         Nothing -> B.putStr . encode $ results

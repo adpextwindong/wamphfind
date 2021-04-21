@@ -42,7 +42,7 @@ instance ToJSON TrackInfo where
 readTrackInfo :: Bool -> FilePath -> IO TrackInfo
 readTrackInfo pUseFname fp = do
     tag <- ID3.readTag fp
-    let metadata = (fmap fromID3Tag) $ tag
+    let metadata = fromID3Tag <$> tag
     --TODO fname as title
     --TODO Path styling
     return $ TrackInfo fp metadata
