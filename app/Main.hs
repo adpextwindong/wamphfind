@@ -84,10 +84,14 @@ filterByExtensions :: Set String -> [FilePath] -> [FilePath]
 filterByExtensions extensions = filter (\file -> Set.member (getExt file) extensions)
     where getExt = snd . splitExtension
 
+findMusicFromDirectory :: SearchStyle -> FilePath -> IO [FilePath]
+findMusicFromDirectory LocalOnly = liftM (filterByExtensions allowableExtensions) . listDirectory
+findMusicFromDirectory RecursiveSearch = undefined --TODO
+
 main' :: AppConfig -> IO ()
 --CWD STDOUT case
 main' (AppConfig LocalOnly pathStyle pUseFname outputPath []) = do
-    filePaths <- fmap (filterByExtensions allowableExtensions) $ listDirectory =<< getCurrentDirectory
+    filePaths <- (findMusicFromDirectory LocalOnly) =<< getCurrentDirectory
     results <- mapM (readTrackInfo pUseFname) filePaths
     case outputPath of
         Nothing -> B.putStr . encode $ results
