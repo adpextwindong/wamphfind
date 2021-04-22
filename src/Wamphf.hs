@@ -42,10 +42,8 @@ makeLenses ''TrackInfo
 
 deriveJSON defaultOptions{fieldLabelModifier = drop 1} ''TrackInfo
 
-readTrackInfo :: Bool -> FilePath -> IO TrackInfo
-readTrackInfo pUseFname fp = do
+readTrackInfo :: FilePath -> IO TrackInfo
+readTrackInfo fp = do
     tag <- ID3.readTag fp
     let metadata = fromID3Tag <$> tag
-    --TODO fname as title
-    --TODO Path styling
     return $ TrackInfo fp metadata

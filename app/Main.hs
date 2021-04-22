@@ -9,6 +9,7 @@ import System.FilePath
 import System.Directory
 import Control.Monad
 import Control.Lens
+import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as Set
 import qualified Data.ByteString.Lazy as B
@@ -19,10 +20,13 @@ data PathStyle = RelativePath | AbsolutePath FilePath
 data SearchStyle = LocalOnly | RecursiveSearch
     deriving Show
 
+data FilePathAsTitleStyle = FullPathTitle | StripExtTitle | DontSwapTitle
+    deriving Show
+
 data AppConfig = AppConfig {
                         useRecursiveSearch  :: SearchStyle
                       , useRelativePaths    :: PathStyle
-                      , useFilePathAsTitle  :: Bool
+                      , useFilePathAsTitle  :: FilePathAsTitleStyle
                       , outPath             :: Maybe FilePath
                       , inPaths             :: [FilePath]
                      } deriving Show
@@ -31,7 +35,7 @@ appConfigParse :: Parser AppConfig
 appConfigParse = AppConfig
     <$> argpRecursiveSearch
     <*> (argpAbsolutePath <|> argpRelativePath)
-    <*> argpFPAsTitle
+    <*> ((argpFullpathAsTitle <|> argpExtAsTitle) <|> argpDontSwapTitle)
     <*> optional argpOutPath
     <*> argpInPaths
 
@@ -44,15 +48,23 @@ argpRecursiveSearch = flag LocalOnly -- defaults to nonRecursiveSearch
 argpAbsolutePath :: Parser PathStyle
 argpAbsolutePath = AbsolutePath <$> option str
                          (short 'a' <> long "absolute" <>
-                          help "TODO Use absolute file path style. Defaults to relative file paths.")
+                          help "Use absolute file path style. Defaults to relative file paths.")
 
-argpRelativePath = flag RelativePath RelativePath internal
+argpRelativePath = flag RelativePath RelativePath internal --default
 
-argpFPAsTitle :: Parser Bool
-argpFPAsTitle = flag False
-                     True
-                     (short 'n' <> long "FileNameAsTitle" <>
-                      help "Use FileName as Title field metadata.")
+
+argpFullpathAsTitle :: Parser FilePathAsTitleStyle
+argpFullpathAsTitle = flag' FullPathTitle
+                            (short 'n' <> long "FileNameAsTitle" <>
+                             help "Use FileName as Title field metadata.")
+
+argpExtAsTitle :: Parser FilePathAsTitleStyle
+argpExtAsTitle = flag' StripExtTitle
+                       (short 'e' <> long "StripExtAsTitle" <>
+                        help "Use FileName with all extension stripped as Title field metadata.")
+
+
+argpDontSwapTitle = flag DontSwapTitle DontSwapTitle internal --default
 
 argpOutPath :: Parser FilePath
 argpOutPath = strOption ( short 'o' <> long "output" <> metavar "OUTPUT_TARGET"
@@ -98,12 +110,41 @@ swapTitleWithFname :: FilePath -> TrackInfo -> TrackInfo
 swapTitleWithFname fp tinfo = over (metaData . _Just . title . _Just) (const fname) tinfo
     where fname = takeFileName fp
 
+applyBasenameToUrl :: String -> TrackInfo -> TrackInfo
+applyBasenameToUrl bname tinfo = tinfo & url .~ prependedURL
+    where
+        properBname = if hasTrailingPathSeparator bname
+                      then bname
+                      else bname ++ "/"
+        prependedURL = properBname ++ (tinfo ^. url)
+
+-- Compose optional endomorphisms
+endoPChain :: [(Bool, (a -> a))] -> (a -> a)
+endoPChain = foldl (.) id . map snd . filter fst
+
+endoMaybeChain :: [Maybe (a -> a)] -> (a -> a)
+endoMaybeChain = foldl (.) id . catMaybes
+
+applyCfg :: AppConfig -> TrackInfo -> FilePath -> TrackInfo
+applyCfg cfg tinfo fp = flagPipeline tinfo
+    where
+        bnamePF = case useRelativePaths cfg of
+                    RelativePath -> Nothing
+                    AbsolutePath bname -> Just $ applyBasenameToUrl bname
+
+        titlePF = case useFilePathAsTitle cfg of
+                    DontSwapTitle -> Nothing
+                    FullPathTitle -> Just $ swapTitleWithFname fp
+                    StripExtTitle -> Just $ swapTitleWithFname $ dropExtensions fp
+
+        --Watch out for ordering
+        flagPipeline = endoMaybeChain [titlePF, bnamePF]
 
 ts = TrackInfo "fn" $ Just $ TrackMetaData Nothing (Just "test") Nothing Nothing Nothing
+
 main' :: AppConfig -> IO ()
---CWD STDOUT case
-main' (AppConfig LocalOnly pathStyle pUseFname outputPath []) = do
+main' cfg@(AppConfig LocalOnly pathStyle pUseFname outputPath []) = do
     filePaths <- findMusicFromDirectory LocalOnly =<< getCurrentDirectory
-    tracks <- mapM (readTrackInfo pUseFname) filePaths
-    --TODO we could probably use a lens to cleanly do the Fname mapping
-    outputEncodeToTarget tracks outputPath
+    tracks <- mapM readTrackInfo filePaths
+    let results = uncurry (applyCfg cfg) <$> zip tracks filePaths
+    outputEncodeToTarget results outputPath
