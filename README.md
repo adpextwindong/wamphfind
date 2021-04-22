@@ -59,3 +59,8 @@ NOTE: This will result in foo.mp3.zip -> foo
 - Prompt on existing outputfile
 - Exception Handling
 - Symbolic Link Handling?
+
+# BUILD DEPENDENCIES
+
+[idiii (with the build process ported to Stack)](https://github.com/adpextwindong/idiiiFORK)
+Look at stack.yaml to control where that goes.
