@@ -20,7 +20,12 @@ See --help for more details
 
 ## Add a directory basename to the url metadata
 ```
-./wamphfind -a track
+./wamphfind -a tracks
+```
+RESULT: "url":"GoldenSpade.mp3" ==> "url":"tracks/GoldenSpade.mp3"
+
+Other examples
+```
 ./wamphfind -a track/
 ./wamphfind -a syndicate/tracks
 ```
