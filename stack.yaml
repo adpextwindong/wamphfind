@@ -47,6 +47,8 @@ extra-deps:
 flags:
    regex-posix:
       _regex-posix-clib: true
+   aeson-pretty:
+      lib-only : true
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
