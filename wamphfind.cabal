@@ -48,6 +48,7 @@ executable wamphfind-exe
     , filepath
     , optparse-applicative
     , aeson
+    , aeson-pretty
     , containers
     , bytestring
     , lens

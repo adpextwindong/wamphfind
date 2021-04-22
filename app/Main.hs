@@ -3,6 +3,7 @@ module Main where
 import Wamphf
 
 import Data.Aeson
+import Data.Aeson.Encode.Pretty
 import Options.Applicative
 import System.Exit (exitSuccess)
 import System.FilePath
@@ -27,6 +28,7 @@ data AppConfig = AppConfig {
                         useRecursiveSearch  :: SearchStyle
                       , useRelativePaths    :: PathStyle
                       , useFilePathAsTitle  :: FilePathAsTitleStyle
+                      , usePrettyPrint      :: Bool
                       , outPath             :: Maybe FilePath
                       , inPaths             :: [FilePath]
                      } deriving Show
@@ -36,6 +38,7 @@ appConfigParse = AppConfig
     <$> argpRecursiveSearch
     <*> (argpAbsolutePath <|> argpRelativePath)
     <*> ((argpFullpathAsTitle <|> argpExtAsTitle) <|> argpDontSwapTitle)
+    <*> argpPrettyPrint
     <*> optional argpOutPath
     <*> argpInPaths
 
@@ -65,6 +68,12 @@ argpExtAsTitle = flag' StripExtTitle
 
 
 argpDontSwapTitle = flag DontSwapTitle DontSwapTitle internal --default
+
+argpPrettyPrint :: Parser Bool
+argpPrettyPrint = flag False
+                       True
+                       ( short 'p' <> long "pretty"
+                            <> help "Pretty prints the JSON output before encoding to output target.")
 
 argpOutPath :: Parser FilePath
 argpOutPath = strOption ( short 'o' <> long "output" <> metavar "OUTPUT_TARGET"
@@ -102,9 +111,14 @@ findMusicFromDirectory LocalOnly       = fmap (filterByExtensions allowableExten
 findMusicFromDirectory RecursiveSearch = undefined --TODO
 
 --Nothing redirects to STDOUT
-outputEncodeToTarget :: ToJSON a => a -> Maybe FilePath -> IO ()
-outputEncodeToTarget results Nothing   = B.putStr . encode $ results
-outputEncodeToTarget results (Just fp) = encodeFile fp results
+outputEncodeToTarget :: ToJSON a => a -> Bool -> Maybe FilePath -> IO ()
+outputEncodeToTarget results ppretty mfp   = case mfp of
+                                                Nothing -> B.putStr encoding
+                                                Just fp -> B.writeFile fp encoding
+    where
+        encoding = if ppretty
+                   then encodePretty results
+                   else encode results
 
 swapTitleWithFname :: FilePath -> TrackInfo -> TrackInfo
 swapTitleWithFname fp tinfo = over (metaData . _Just . title . _Just) (const fname) tinfo
@@ -143,8 +157,8 @@ applyCfg cfg tinfo fp = flagPipeline tinfo
 ts = TrackInfo "fn" $ Just $ TrackMetaData Nothing (Just "test") Nothing Nothing Nothing
 
 main' :: AppConfig -> IO ()
-main' cfg@(AppConfig LocalOnly pathStyle pUseFname outputPath []) = do
+main' cfg@(AppConfig LocalOnly pathStyle pUseFname ppretty outputPath []) = do
     filePaths <- findMusicFromDirectory LocalOnly =<< getCurrentDirectory
     tracks <- mapM readTrackInfo filePaths
     let results = uncurry (applyCfg cfg) <$> zip tracks filePaths
-    outputEncodeToTarget results outputPath
+    outputEncodeToTarget results ppretty outputPath
