@@ -90,7 +90,7 @@ optsParse =
         progDesc "wamphfind by George Takumi Crary")
     where
        versionOption :: Parser (a -> a)
-       versionOption = infoOption "0.0.1" (short 'v' <> long "version" <> help "Show version")
+       versionOption = infoOption "0.0.2" (short 'v' <> long "version" <> help "Show version")
 
 main :: IO ()
 main = do

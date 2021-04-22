@@ -7,7 +7,7 @@ cabal-version: 1.12
 -- hash: f21653c56e5e80601208978eb5c6742b0f1c644f25d1554f45d07215902ec08e
 
 name:           wamphfind
-version:        0.1.0.0
+version:        0.0.2
 description:    Please see the README on GitHub at <https://github.com/adpextwindong/wamphfind#readme>
 homepage:       https://github.com/adpextwindong/wamphfind#readme
 bug-reports:    https://github.com/adpextwindong/wamphfind/issues
@@ -18,7 +18,7 @@ license:        BSD2
 license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
-    README.md
+    README.md, Changelog.md
 
 source-repository head
   type: git

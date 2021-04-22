@@ -18,11 +18,36 @@ See --help for more details
 ./wamphfind
 ```
 
+## Add a directory basename to the url metadata
+```
+./wamphfind -a track
+./wamphfind -a track/
+./wamphfind -a syndicate/tracks
+```
+
+NOTE: If the trailing slash is ommited it will be added
+
+## Use filename as track title metadata
+```
+./wamphfind -n
+```
+
+## Use filename with extensions dropped as track title metadata
+```
+./wamphfind -e
+```
+NOTE: This will result in foo.mp3.zip -> foo
+
+## Pretty print the JSON output
+```
+./wamphfind -p
+```
+
 # TODO
 
 - Duration calculation
 - Recursive directory searching
-- Absolute file path handling with basenames
+- ~~absolute file path handling with basenames~~
 - Input filepath args
 - Web Audio API extension list
 - forkMapM parallelism
