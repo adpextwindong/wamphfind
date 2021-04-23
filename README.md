@@ -152,7 +152,7 @@ NOTE: This will result in foo.mp3.zip -> foo
 # TODO
 
 - Duration calculation
-- Recursive directory searching
+- ~~Recursive directory searching~~
 - ~~absolute file path handling with basenames~~
 - Input filepath args
 - Web Audio API extension list
