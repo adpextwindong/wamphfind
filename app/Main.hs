@@ -112,12 +112,12 @@ prependbnFP :: FilePath -> FilePath -> FilePath
 prependbnFP bn fp = bn ++ "/" ++ fp
 
 findMusicFromDirectory :: SearchStyle -> FilePath -> IO [FilePath]
-findMusicFromDirectory LocalOnly fp = fmap (fmap (prependbnFP fp)) $ fmap (filterByExtensions allowableExtensions) $ listDirectory fp
+findMusicFromDirectory LocalOnly fp = fmap (prependbnFP fp) . filterByExtensions allowableExtensions <$> listDirectory fp
 findMusicFromDirectory RecursiveSearch fp = do
         localFiles <- findMusicFromDirectory LocalOnly fp
-        localDirs <- join $ liftM filterForDirs $ listDirectory fp :: IO [FilePath]
+        localDirs <- filterForDirs =<< listDirectory fp :: IO [FilePath]
         let bnLocalDirs = ((fp ++ "/") ++ ) <$> localDirs
-        descendantFiles <- liftM concat $ sequence $ (findMusicFromDirectory RecursiveSearch) <$> bnLocalDirs
+        descendantFiles <- fmap concat $ sequence $ findMusicFromDirectory RecursiveSearch <$> bnLocalDirs
         return (localFiles ++ descendantFiles)
 
 
@@ -135,7 +135,7 @@ outputEncodeToTarget results ppretty mfp   = case mfp of
                    else encode results
 
 swapTitleWithFname :: FilePath -> TrackInfo -> TrackInfo
-swapTitleWithFname fp tinfo = over (metaData . _Just . title . _Just) (const fname) tinfo
+swapTitleWithFname fp = over (metaData . _Just . title . _Just) (const fname)
     where fname = takeFileName fp
 
 applyBasenameToUrl :: String -> TrackInfo -> TrackInfo
@@ -147,7 +147,7 @@ applyBasenameToUrl bname tinfo = tinfo & url .~ prependedURL
         prependedURL = properBname ++ (tinfo ^. url)
 
 -- Compose optional endomorphisms
-endoPChain :: [(Bool, (a -> a))] -> (a -> a)
+endoPChain :: [(Bool, a -> a)] -> (a -> a)
 endoPChain = foldl (.) id . map snd . filter fst
 
 endoMaybeChain :: [Maybe (a -> a)] -> (a -> a)
@@ -174,7 +174,7 @@ grabMusicFilePaths searchStyle inputDirs = if null inputDirs
                                            then
                                            findMusicFromDirectory searchStyle =<< getCurrentDirectory
                                            else
-                                           liftM concat $ sequence $ findMusicFromDirectory searchStyle <$> dropTrailingPathSeparator <$> inputDirs
+                                           fmap concat $ sequence $ findMusicFromDirectory searchStyle . dropTrailingPathSeparator <$> inputDirs
 
 
 main' :: AppConfig -> IO ()
