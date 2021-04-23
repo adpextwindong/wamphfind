@@ -58,6 +58,7 @@ NOTE: This will result in foo.mp3.zip -> foo
 - forkMapM parallelism
 - Prompt on existing outputfile
 - Exception Handling
+    * [Handle errors like ENOTDIR and others listed here.](https://hackage.haskell.org/package/directory-1.3.6.1/docs/System-Directory.html)
 - Symbolic Link Handling?
 
 # BUILD DEPENDENCIES
