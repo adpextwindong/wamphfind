@@ -183,7 +183,7 @@ NOTE: This will result in foo.mp3.zip -> foo
 - Duration calculation
 - ~~Recursive directory searching~~
 - ~~absolute file path handling with basenames~~
-- Input filepath args
+- ~~Input filepath args~~
 - Web Audio API extension list
 - forkMapM parallelism
 - Prompt on existing outputfile
