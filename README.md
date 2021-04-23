@@ -4,6 +4,47 @@
 
 Generates the tracklist JSON seen [here](https://github.com/captbaritone/webamp/blob/master/examples/minimal/index.html#L16).
 
+Made for [Fresh2Fresh](http://fresh2fresh.info). Check him out.
+
+# Example
+
+```shell
+takumi@~/dev/wamphfind/example
+λ ls -l
+total 86660
+-rwxr-xr-x 1 takumi なし 13656675 Apr 20 11:30 'Timothy Seals - A New Dawn (Cover Edition) - 01 Pyre Light (Cover).mp3'
+-rwxr-xr-x 1 takumi なし  7768447 Apr 20 11:30 'Timothy Seals - A New Dawn (Cover Edition) - 02 Silent Thunder (Cover).mp3'
+```
+
+Ran with ```./wamphfind -p``` will result in:
+
+```json
+[
+    {
+        "url": "Timothy Seals - A New Dawn (Cover Edition) - 02 Silent Thunder (Cover).mp3",
+        "metaData": {
+            "track": "2",
+            "album": "A New Dawn (Cover Edition)",
+            "year": null,
+            "title": "Silent Thunder (Cover)",
+            "artist": "Timothy Seals"
+        }
+    },
+    {
+        "url": "Timothy Seals - A New Dawn (Cover Edition) - 01 Pyre Light (Cover).mp3",
+        "metaData": {
+            "track": "1",
+            "album": "A New Dawn (Cover Edition)",
+            "year": null,
+            "title": "Pyre Light (Cover)",
+            "artist": "Timothy Seals"
+        }
+    }
+]
+```
+
+Which you can drop in your into your WinAmp initaltracks. If you're sticking your tracks in a directory like 'tracks/' then use the -a flag to appropriately set the url.
+
 # Usage
 
 See --help for more details
@@ -65,3 +106,7 @@ NOTE: This will result in foo.mp3.zip -> foo
 
 [idiii (with the build process ported to Stack)](https://github.com/adpextwindong/idiiiFORK)
 Look at stack.yaml to control where that goes.
+
+# LICENSE
+
+See [LICENSE](LICENSE). If you like it buy me a beer will ya.
