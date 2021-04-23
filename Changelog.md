@@ -1,5 +1,8 @@
 # Revision history for Wamphfind
 
+## Wamphfind 0.0.4 (2021-04-23)
+  * Added input directory argument handling
+
 ## Wamphfind 0.0.3 (2021-04-23)
   * Added -r recursive search flag
 

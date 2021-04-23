@@ -119,6 +119,35 @@ See --help for more details
 ./wamphfind
 ```
 
+## Search target directories (Ignore -p flag for pretty printing)
+```
+./wamphfind album1 album2 -p
+```
+
+```
+[
+    {
+        "url": "album1/rec0.mp3",
+        "metaData": {
+            "track": "1",
+            "album": "A New Dawn (Cover Edition)",
+            "year": null,
+            "title": "Pyre Light (Cover)",
+            "artist": "Timothy Seals"
+        }
+    },
+    {
+        "url": "album2/rec1.mp3",
+        "metaData": {
+            "track": "1",
+            "album": "A New Dawn (Cover Edition)",
+            "year": null,
+            "title": "Pyre Light (Cover)",
+            "artist": "Timothy Seals"
+        }
+    }
+]
+```
 ## Add a directory basename to the url metadata
 ```
 ./wamphfind -a tracks

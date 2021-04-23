@@ -81,7 +81,7 @@ argpOutPath = strOption ( short 'o' <> long "output" <> metavar "OUTPUT_TARGET"
 
 argpInPaths :: Parser [FilePath]
 argpInPaths = many $ Options.Applicative.argument str (metavar "INPUTDIRS..." <>
-                                    help "TODO Input directory paths. Defaults to current working directory")
+                                    help "Input directory paths. Defaults to current working directory.")
 
 optsParse :: ParserInfo AppConfig
 optsParse =
@@ -90,7 +90,7 @@ optsParse =
         progDesc "wamphfind by George Takumi Crary")
     where
        versionOption :: Parser (a -> a)
-       versionOption = infoOption "0.0.2" (short 'v' <> long "version" <> help "Show version")
+       versionOption = infoOption "0.0.4" (short 'v' <> long "version" <> help "Show version")
 
 main :: IO ()
 main = do
@@ -170,10 +170,18 @@ applyCfg cfg tinfo fp = flagPipeline tinfo
 
 ts = TrackInfo "fn" $ Just $ TrackMetaData Nothing (Just "test") Nothing Nothing Nothing
 
+grabMusicFilePaths searchStyle inputDirs = if null inputDirs
+                                           then
+                                           findMusicFromDirectory searchStyle =<< getCurrentDirectory
+                                           else
+                                           liftM concat $ sequence $ findMusicFromDirectory searchStyle <$> dropTrailingPathSeparator <$> inputDirs
+
+
 main' :: AppConfig -> IO ()
-main' cfg@(AppConfig searchStyle pathStyle pUseFname ppretty outputPath []) = do
-    filePaths <- findMusicFromDirectory searchStyle =<< getCurrentDirectory
-    relFilePaths <- sequence $ makeRelativeToCurrentDirectory <$> filePaths :: IO [FilePath]
+main' cfg@(AppConfig searchStyle pathStyle pUseFname ppretty outputPath inputDirs) = do
+    filePaths <- grabMusicFilePaths searchStyle inputDirs
+    relFilePaths <- sequence $ makeRelativeToCurrentDirectory <$> filePaths
+
     tracks <- mapM readTrackInfo relFilePaths
     let results = uncurry (applyCfg cfg) <$> zip tracks relFilePaths
     outputEncodeToTarget results ppretty outputPath
