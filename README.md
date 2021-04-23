@@ -54,6 +54,66 @@ See --help for more details
 ./wamphfind -o output.json
 ```
 
+## Search current working directory recursively
+```
+./wamphfind -r
+```
+
+```
+[
+    {
+        "url": "tracks/rec0.mp3",
+        "metaData": {
+            "track": "1",
+            "album": "A New Dawn (Cover Edition)",
+            "year": null,
+            "title": "rec0.mp3",
+            "artist": "Timothy Seals"
+        }
+    },
+    {
+        "url": "tracks/test/testrec.mp3",
+        "metaData": {
+            "track": "2",
+            "album": "A New Dawn (Cover Edition)",
+            "year": null,
+            "title": "testrec.mp3",
+            "artist": "Timothy Seals"
+        }
+    },
+    {
+        "url": "tracks/test/test/testrec3.mp3",
+        "metaData": {
+            "track": "2",
+            "album": "A New Dawn (Cover Edition)",
+            "year": null,
+            "title": "testrec3.mp3",
+            "artist": "Timothy Seals"
+        }
+    },
+    {
+        "url": "tracks/example/rec1.mp3",
+        "metaData": {
+            "track": "1",
+            "album": "A New Dawn (Cover Edition)",
+            "year": null,
+            "title": "rec1.mp3",
+            "artist": "Timothy Seals"
+        }
+    },
+    {
+        "url": "tracks/example/test/rec2.mp3",
+        "metaData": {
+            "track": "2",
+            "album": "A New Dawn (Cover Edition)",
+            "year": null,
+            "title": "rec2.mp3",
+            "artist": "Timothy Seals"
+        }
+    }
+]
+```
+
 ## Search local directory and output to STDOUT for piping to another process such as JQ.
 ```
 ./wamphfind

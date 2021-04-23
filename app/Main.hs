@@ -46,7 +46,7 @@ argpRecursiveSearch :: Parser SearchStyle
 argpRecursiveSearch = flag LocalOnly -- defaults to nonRecursiveSearch
                            RecursiveSearch
                            (short 'r' <> long "recursive" <>
-                            help "TODO Search for mp3 files recursively. Defaults to input directory only search.")
+                            help "Search for mp3 files recursively. Defaults to input directory only search.")
 
 argpAbsolutePath :: Parser PathStyle
 argpAbsolutePath = AbsolutePath <$> option str
@@ -106,9 +106,23 @@ filterByExtensions :: Set String -> [FilePath] -> [FilePath]
 filterByExtensions extensions = filter (\file -> Set.member (getExt file) extensions)
     where getExt = snd . splitExtension
 
+
+--TODO look into the filepath module for a better way
+prependbnFP :: FilePath -> FilePath -> FilePath
+prependbnFP bn fp = bn ++ "/" ++ fp
+
 findMusicFromDirectory :: SearchStyle -> FilePath -> IO [FilePath]
-findMusicFromDirectory LocalOnly       = fmap (filterByExtensions allowableExtensions) . listDirectory
-findMusicFromDirectory RecursiveSearch = undefined --TODO
+findMusicFromDirectory LocalOnly fp = fmap (fmap (prependbnFP fp)) $ fmap (filterByExtensions allowableExtensions) $ listDirectory fp
+findMusicFromDirectory RecursiveSearch fp = do
+        localFiles <- findMusicFromDirectory LocalOnly fp
+        localDirs <- join $ liftM filterForDirs $ listDirectory fp :: IO [FilePath]
+        let bnLocalDirs = ((fp ++ "/") ++ ) <$> localDirs
+        descendantFiles <- liftM concat $ sequence $ (findMusicFromDirectory RecursiveSearch) <$> bnLocalDirs
+        return (localFiles ++ descendantFiles)
+
+
+filterForDirs :: [FilePath] -> IO [FilePath]
+filterForDirs = filterM doesDirectoryExist
 
 --Nothing redirects to STDOUT
 outputEncodeToTarget :: ToJSON a => a -> Bool -> Maybe FilePath -> IO ()
@@ -157,8 +171,9 @@ applyCfg cfg tinfo fp = flagPipeline tinfo
 ts = TrackInfo "fn" $ Just $ TrackMetaData Nothing (Just "test") Nothing Nothing Nothing
 
 main' :: AppConfig -> IO ()
-main' cfg@(AppConfig LocalOnly pathStyle pUseFname ppretty outputPath []) = do
-    filePaths <- findMusicFromDirectory LocalOnly =<< getCurrentDirectory
-    tracks <- mapM readTrackInfo filePaths
-    let results = uncurry (applyCfg cfg) <$> zip tracks filePaths
+main' cfg@(AppConfig searchStyle pathStyle pUseFname ppretty outputPath []) = do
+    filePaths <- findMusicFromDirectory searchStyle =<< getCurrentDirectory
+    relFilePaths <- sequence $ makeRelativeToCurrentDirectory <$> filePaths :: IO [FilePath]
+    tracks <- mapM readTrackInfo relFilePaths
+    let results = uncurry (applyCfg cfg) <$> zip tracks relFilePaths
     outputEncodeToTarget results ppretty outputPath
