@@ -186,7 +186,7 @@ NOTE: This will result in foo.mp3.zip -> foo
 - ~~Input filepath args~~
 - Web Audio API extension list
 - forkMapM parallelism
-- Prompt on existing outputfile
+- ~~Prompt on existing outputfile~~
 - Exception Handling
     * [Handle errors like ENOTDIR and others listed here.](https://hackage.haskell.org/package/directory-1.3.6.1/docs/System-Directory.html)
 - Symbolic Link Handling?

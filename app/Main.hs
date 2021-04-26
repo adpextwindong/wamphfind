@@ -8,9 +8,11 @@ import Options.Applicative
 import System.Exit (exitSuccess)
 import System.FilePath
 import System.Directory
+import System.IO
 import Control.Monad
 import Control.Lens
 import Data.Maybe
+import Data.Char
 import Data.Set (Set)
 import qualified Data.Set as Set
 import qualified Data.ByteString.Lazy as B
@@ -179,9 +181,20 @@ grabMusicFilePaths searchStyle inputDirs = if null inputDirs
 
 main' :: AppConfig -> IO ()
 main' cfg@(AppConfig searchStyle pathStyle pUseFname ppretty outputPath inputDirs) = do
-    filePaths <- grabMusicFilePaths searchStyle inputDirs
-    relFilePaths <- sequence $ makeRelativeToCurrentDirectory <$> filePaths
+    shouldPromptOutPath <- do case outputPath of
+                                    Just fp -> doesFileExist fp
+                                    Nothing -> return False
 
-    tracks <- mapM readTrackInfo relFilePaths
-    let results = uncurry (applyCfg cfg) <$> zip tracks relFilePaths
-    outputEncodeToTarget results ppretty outputPath
+    contExecution <- if shouldPromptOutPath
+                        then do
+                            hPutStr stderr "Output filepath exists. Continue? [Y]/n\n"
+                            fmap ((\x -> (x == "y") || (x == "")) . map toLower) getLine
+                        else return True
+
+    unless (not contExecution)
+      $ do  filePaths <- grabMusicFilePaths searchStyle inputDirs
+            relFilePaths <- sequence $ makeRelativeToCurrentDirectory <$> filePaths
+
+            tracks <- mapM readTrackInfo relFilePaths
+            let results = uncurry (applyCfg cfg) <$> zip tracks relFilePaths
+            outputEncodeToTarget results ppretty outputPath
