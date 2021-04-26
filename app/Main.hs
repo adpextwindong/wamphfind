@@ -1,6 +1,7 @@
 module Main where
 
 import Wamphf
+import Shinju.Cli.Control (endoMaybeChain)
 
 import Data.Aeson
 import Data.Aeson.Encode.Pretty
@@ -147,13 +148,6 @@ applyBasenameToUrl bname tinfo = tinfo & url .~ prependedURL
                       then bname
                       else bname ++ "/"
         prependedURL = properBname ++ (tinfo ^. url)
-
--- Compose optional endomorphisms
-endoPChain :: [(Bool, a -> a)] -> (a -> a)
-endoPChain = foldl (.) id . map snd . filter fst
-
-endoMaybeChain :: [Maybe (a -> a)] -> (a -> a)
-endoMaybeChain = foldl (.) id . catMaybes
 
 applyCfg :: AppConfig -> TrackInfo -> FilePath -> TrackInfo
 applyCfg cfg tinfo fp = flagPipeline tinfo

@@ -7,7 +7,7 @@ cabal-version: 1.12
 -- hash: f21653c56e5e80601208978eb5c6742b0f1c644f25d1554f45d07215902ec08e
 
 name:           wamphfind
-version:        0.0.3
+version:        0.0.4
 description:    Please see the README on GitHub at <https://github.com/adpextwindong/wamphfind#readme>
 homepage:       https://github.com/adpextwindong/wamphfind#readme
 bug-reports:    https://github.com/adpextwindong/wamphfind/issues
@@ -52,6 +52,7 @@ executable wamphfind-exe
     , containers
     , bytestring
     , lens
+    , Shinju
   default-language: Haskell2010
 
 test-suite wamphfind-test
